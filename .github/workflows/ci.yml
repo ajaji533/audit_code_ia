@@ -1,0 +1,48 @@
+name: CI Audit Code IA
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  evaluation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verifier la version de Python
+        run: python3 --version
+
+      - name: Installer les dependances
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Lancer toutes les evaluations
+        run: python3 scripts/lancer_tous.py
+
+      - name: Generer le rapport final
+        run: python3 scripts/generer_rapport.py
+
+      - name: Afficher les fichiers generes
+        run: |
+          echo "=== Contenu de rapports/ ==="
+          ls -R rapports
+
+      - name: Sauvegarder les artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapports-audit-code-ia
+          path: |
+            rapports/

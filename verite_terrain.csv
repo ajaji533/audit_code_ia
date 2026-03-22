@@ -1,0 +1,11 @@
+fichier,langage,type_probleme,gravite,description_attendue,source,attendu
+python1_motdepasse_en_dur.py,python,secret_en_dur,moyenne,Présence d'un mot de passe codé en dur dans le code,manuel,1
+python2_eval_dangereux.py,python,eval_dangereux,haute,Utilisation de eval sur une entrée utilisateur,manuel,1
+python3_os_system_dangereux.py,python,commande_systeme_dangereuse,haute,Construction d'une commande système à partir d'une entrée utilisateur,manuel,1
+python4_probleme_style.py,python,probleme_style,faible,Code peu lisible et peu conforme aux bonnes pratiques de style,manuel,1
+c1_debordement_gets.c,c,debordement_tampon,haute,Utilisation de gets pouvant provoquer un débordement de tampon,manuel,1
+c2_fuite_memoire.c,c,fuite_memoire,moyenne,Mémoire allouée avec malloc non libérée par free,manuel,1
+c3_copie_non_bornee.c,c,copie_non_bornee,haute,Utilisation de strcpy sans contrôle de taille,manuel,1
+php1_injection_sql.php,php,injection_sql,haute,Construction d'une requête SQL avec entrée utilisateur non filtrée,manuel,1
+php2_xss.php,php,xss,haute,Affichage direct d'une entrée utilisateur sans échappement HTML,manuel,1
+php3_include_dangereux.php,php,include_dangereux,haute,Inclusion dynamique de fichier contrôlée par l'utilisateur,manuel,1

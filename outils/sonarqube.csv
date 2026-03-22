@@ -1,0 +1,11 @@
+fichier,probleme_detecte,gravite_proposee,justification
+python1_motdepasse_en_dur.py,secret_en_dur,moyenne,Secret détecté directement dans le code source
+python2_eval_dangereux.py,eval_dangereux,haute,Utilisation dangereuse de eval sur une entrée utilisateur
+python3_os_system_dangereux.py,commande_systeme_dangereuse,haute,Commande système construite dynamiquement
+python4_probleme_style.py,probleme_style,faible,Code peu lisible et non conforme au style recommandé
+c1_debordement_gets.c,debordement_tampon,haute,La fonction gets est dangereuse
+c2_fuite_memoire.c,,moyenne,Aucun problème détecté
+c3_copie_non_bornee.c,copie_non_bornee,haute,Utilisation de strcpy sans contrôle de taille
+php1_injection_sql.php,injection_sql,haute,Entrée utilisateur concaténée dans une requête SQL
+php2_xss.php,xss,haute,Entrée utilisateur affichée sans échappement
+php3_include_dangereux.php,,haute,Aucun problème détecté
