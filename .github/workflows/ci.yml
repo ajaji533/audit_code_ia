@@ -2,47 +2,145 @@ name: CI Audit Code IA
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: audit-code-ia-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  evaluation:
+  lint:
+    name: Lint Python
     runs-on: ubuntu-latest
 
     steps:
-      - name: Recuperer le depot
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Installer Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
-      - name: Verifier la version de Python
-        run: python3 --version
-
-      - name: Installer les dependances
+      - name: Install lint dependencies
         run: |
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+          python -m pip install --upgrade pip
+          pip install ruff
 
-      - name: Lancer toutes les evaluations
-        run: python3 scripts/lancer_tous.py
-
-      - name: Generer le rapport final
-        run: python3 scripts/generer_rapport.py
-
-      - name: Afficher les fichiers generes
+      - name: Run Ruff
         run: |
-          echo "=== Contenu de rapports/ ==="
+          ruff check scripts corpus/manuel/python
+
+  test:
+    name: Test scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Show Python version
+        run: python --version
+
+      - name: Validate Python syntax
+        run: |
+          python -m compileall scripts corpus/manuel/python
+
+      - name: Run all evaluations
+        run: |
+          python3 scripts/lancer_tous.py
+
+      - name: Generate report
+        run: |
+          python3 scripts/generer_rapport.py
+
+      - name: Check expected outputs
+        run: |
+          test -f rapports/synthese_sonarqube.csv
+          test -f rapports/synthese_snyk.csv
+          test -f rapports/synthese_codeql.csv
+          test -f rapports/synthese.csv
+          test -f rapports/rapport.md
+
+  evaluate:
+    name: Evaluate ${{ matrix.tool }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [sonarqube, snyk, codeql]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Run evaluation for one tool
+        run: |
+          python3 scripts/evaluer.py \
+            verite_terrain.csv \
+            outils/${{ matrix.tool }}.csv \
+            rapports/synthese_${{ matrix.tool }}.csv
+
+      - name: Upload per-tool artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: synthese-${{ matrix.tool }}
+          path: rapports/synthese_${{ matrix.tool }}.csv
+
+  report:
+    name: Final report
+    runs-on: ubuntu-latest
+    needs: [lint, test, evaluate]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Download all evaluation artifacts
+        uses: actions/download-artifact@v5
+        with:
+          pattern: synthese-*
+          path: rapports
+          merge-multiple: true
+
+      - name: Show downloaded files
+        run: |
+          echo "=== rapports/ ==="
           ls -R rapports
 
-      - name: Sauvegarder les artefacts
-        uses: actions/upload-artifact@v4
+      - name: Generate consolidated report
+        run: |
+          python3 scripts/generer_rapport.py
+
+      - name: Upload final reports
+        uses: actions/upload-artifact@v6
         with:
           name: rapports-audit-code-ia
           path: |
-            rapports/
+            rapports/synthese.csv
+            rapports/rapport.md
+            rapports/synthese_sonarqube.csv
+            rapports/synthese_snyk.csv
+            rapports/synthese_codeql.csv
